@@ -12,7 +12,7 @@ from transformers import BertTokenizer
 sys.path.append("../")
 from lmms.datasets.clip_dataset import Flikr8kDataset
 from lmms.models.clip.config import ClipConfig as cfg
-from lmms.models.clip.model import CLIPModel
+from lmms.models.clip.modeling_clip import CLIPModel
 
 
 def split_data(dataset: Flikr8kDataset, val_split: float):
@@ -37,14 +37,14 @@ class MMClipModel(BaseModel):
         caption,
         mode="loss",
     ):
-        loss = self.model(
+        outputs = self.model(
             input_ids,
             attention_mask,
             images,
             caption,
         )
         if mode == "loss":
-            return {"loss": loss}
+            return {"loss": outputs[0]}
 
 
 def main() -> None:

@@ -21,16 +21,14 @@ class ClipConfig:
 
     temperature = 1.0
     # image size
-    size = 224
-    max_length = 200
+    target_size = 224
+    max_length = 128
     # data loader
     batch_size = 64
     num_workers = 4
     # optim
     lr = 1e-3
     weight_decay = 1e-4
-    patience = 2
-    factor = 0.5
-    epochs = 5
+    epochs = 10
     # device
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')

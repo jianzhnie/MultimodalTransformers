@@ -22,7 +22,7 @@ class ClipConfig:
     temperature = 1.0
     # image size
     target_size = 224
-    max_length = 128
+    max_length = 256
     # data loader
     batch_size = 64
     num_workers = 4

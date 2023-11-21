@@ -2,7 +2,6 @@ import torch
 import torch.nn.functional as F
 import torchvision
 from torch import nn
-
 from transformers import AutoModel, BertConfig
 
 
@@ -11,7 +10,7 @@ class ImageEncoder(nn.Module):
 
     def __init__(
         self,
-        model_name: str = "resnet50",
+        model_name: str = 'resnet50',
         pretrained: bool = True,
         trainable: bool = True,
     ) -> None:
@@ -19,7 +18,7 @@ class ImageEncoder(nn.Module):
         # self.model = timm.create_model(
         #     model_name, pretrained, num_classes=0, global_pool="avg"
         # )
-        self.model = torchvision.models.resnet50(weights="DEFAULT")
+        self.model = torchvision.models.resnet50(weights='DEFAULT')
         self.model.fc = nn.Identity()
 
         for p in self.model.parameters():
@@ -33,9 +32,10 @@ class ImageEncoder(nn.Module):
 class TextEncoder(nn.Module):
     """"""
 
-    def __init__(
-        self, model_name: str, pretrained: bool = True, trainable: bool = True
-    ) -> None:
+    def __init__(self,
+                 model_name: str,
+                 pretrained: bool = True,
+                 trainable: bool = True) -> None:
         super().__init__()
         if pretrained:
             self.model = AutoModel.from_pretrained(model_name)
@@ -60,6 +60,7 @@ class TextEncoder(nn.Module):
 
 
 class ProjectionHead(nn.Module):
+
     def __init__(
         self,
         embedding_dim: int,
@@ -84,6 +85,7 @@ class ProjectionHead(nn.Module):
 
 
 class CLIPModel(nn.Module):
+
     def __init__(
         self,
         image_encoder_alias: str,
@@ -144,9 +146,9 @@ class CLIPModel(nn.Module):
 
         # normalized features
         image_embeds = image_embeddings / image_embeddings.norm(
-            p=2, dim=-1, keepdim=True
-        )
-        text_embeds = text_embeddings / text_embeddings.norm(p=2, dim=-1, keepdim=True)
+            p=2, dim=-1, keepdim=True)
+        text_embeds = text_embeddings / text_embeddings.norm(
+            p=2, dim=-1, keepdim=True)
 
         # cosine similarity as logits
         logit_scale = self.logit_scale.exp()
@@ -156,17 +158,13 @@ class CLIPModel(nn.Module):
         logits_per_text, logits_per_image = logits, logits.t()
 
         # clip loss
-        caption_loss = nn.functional.cross_entropy(
-            logits_per_text, targets
-        )
-        image_loss = nn.functional.cross_entropy(
-            logits_per_image, targets
-        )
+        caption_loss = nn.functional.cross_entropy(logits_per_text, targets)
+        image_loss = nn.functional.cross_entropy(logits_per_image, targets)
         loss = (caption_loss + image_loss) / 2.0
 
         output = (logits_per_image, logits_per_text, text_embeds, image_embeds)
 
-        return (loss,) + output
+        return (loss, ) + output
 
     def forward_custom(
         self,
@@ -193,16 +191,17 @@ class CLIPModel(nn.Module):
             (images_similarity + texts_similarity) / 2 * self.temperature,
             dim=-1,
         )
-        texts_loss = self.computer_loss(logits, targets, reduction="none")
-        images_loss = self.computer_loss(logits.T, targets.T, reduction="none")
+        texts_loss = self.computer_loss(logits, targets, reduction='none')
+        images_loss = self.computer_loss(logits.T, targets.T, reduction='none')
         loss = (images_loss + texts_loss) / 2.0  # shape: (batch_size)
         return loss.mean()
 
-    def computer_loss(
-        self, logits: torch.Tensor, targets: torch.Tensor, reduction: str = "none"
-    ):
+    def computer_loss(self,
+                      logits: torch.Tensor,
+                      targets: torch.Tensor,
+                      reduction: str = 'none'):
         loss = (-targets * self.log_softmax(logits)).sum(1)
-        if reduction == "none":
+        if reduction == 'none':
             return loss
-        elif reduction == "mean":
+        elif reduction == 'mean':
             return loss.mean()
